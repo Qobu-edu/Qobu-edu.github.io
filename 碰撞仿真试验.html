@@ -1,0 +1,483 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一维对心碰撞交互实验室</title>
+    <style>
+                /* 引用链接样式 */
+                    .citation {
+                        color: #0066cc;
+                        text-decoration: none;
+                        font-size: 0.85em;
+                        vertical-align: super;
+                        font-weight: bold;
+                    }
+
+                    .citation:hover {
+                        color: #004499;
+                        text-decoration: underline;
+                    }
+                
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #f97316;
+            --bg-color: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        /* 实时数据展示区 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .data-card {
+            background: #f8fafc;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .data-label {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #4b5563;
+            margin-bottom: 10px;
+        }
+
+        .data-value {
+            font-size: 3rem; /* 放大字号 */
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .v1-color { color: var(--primary-color); }
+        .v2-color { color: var(--secondary-color); }
+
+        /* 动画区域 - 缩窄高度 */
+        .simulation-area {
+            width: 100%;
+            height: 120px; /* 缩窄后的高度 */
+            background: #f1f5f9;
+            border-bottom: 4px solid #94a3b8;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .block {
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #block1 {
+            background-color: var(--primary-color);
+            width: 60px;
+            height: 60px;
+            left: 100px;
+        }
+
+        #block2 {
+            background-color: var(--secondary-color);
+            width: 60px;
+            height: 60px;
+            left: 600px;
+        }
+
+        /* 控制面板 */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            background: #fdfdfd;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group h3 {
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .input-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-item label {
+            font-size: 1.3rem; /* 放大字号 */
+            font-weight: 600;
+        }
+
+        .input-item input {
+            width: 100px;
+            font-size: 1.3rem; /* 放大字号 */
+            padding: 5px 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .collision-types {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .radio-label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-label input {
+            width: 20px;
+            height: 20px;
+        }
+
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn-start { background-color: #10b981; color: white; }
+        .btn-reset { background-color: #ef4444; color: white; }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 原理说明 */
+        .theory {
+            margin-top: 40px;
+            padding: 25px;
+            background: #fff;
+            border-left: 5px solid var(--primary-color);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .theory h2 { margin-top: 0; }
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: serif;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .data-value { font-size: 2.2rem; }
+            .input-item label, .input-item input { font-size: 1.1rem; }
+        }
+    
+        img {
+        width: 100%;
+        }
+        </style>
+<script>
+document.addEventListener('click', function(e) {
+    const a = e.target.closest('a');
+    if(!a || a.tagName !== 'A' ) return;
+
+    const href =  a.getAttribute('href');
+    if(!href || !href.startsWith('#')) return;
+
+    e.preventDefault();
+        e.stopPropagation();
+        
+        const targetId = href.substring(1);
+        if(targetId) {
+          const element = document.getElementById(targetId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+});
+</script>
+<script>
+window.onload = function () {
+if(document.body.childElementCount === 1) {
+	const scale = document.documentElement.clientWidth/(document.body.children[0].clientWidth+32)
+	if(scale < 1){
+		document.body.style.transform = `scale(${scale})`
+		document.body.style.transformOrigin = 'left top'
+	}
+}
+}
+</script></head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>一维对心碰撞仿真实验</h1>
+        <p>以水平向右为正方向</p>
+    </header>
+
+    <!-- 实时数据看板 -->
+    <div class="dashboard">
+        <div class="data-card">
+            <div class="data-label">物块 1 速度 (v₁)</div>
+            <div id="v1-display" class="data-value v1-color">0.00 m/s</div>
+        </div>
+        <div class="data-card">
+            <div class="data-label">物块 2 速度 (v₂)</div>
+            <div id="v2-display" class="data-value v2-color">0.00 m/s</div>
+        </div>
+    </div>
+
+    <!-- 动画演示区 -->
+    <div class="simulation-area" id="track">
+        <div id="block1" class="block">M1</div>
+        <div id="block2" class="block">M2</div>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="controls">
+        <div class="control-group">
+            <h3 style="color: var(--primary-color);">物块 1 (左侧蓝色)</h3>
+            <div class="input-item">
+                <label>质量 m₁ (kg):</label>
+                <input type="number" id="m1-input" value="5.0" step="0.1" min="0.1">
+            </div>
+            <div class="input-item">
+                <label>初速度 v₁ (m/s):</label>
+                <input type="number" id="v1-input" value="2.0" step="0.1">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <h3 style="color: var(--secondary-color);">物块 2 (右侧橙色)</h3>
+            <div class="input-item">
+                <label>质量 m₂ (kg):</label>
+                <input type="number" id="m2-input" value="5.0" step="0.1" min="0.1">
+            </div>
+            <div class="input-item">
+                <label>初速度 v₂ (m/s):</label>
+                <input type="number" id="v2-input" value="-2.0" step="0.1">
+            </div>
+        </div>
+
+        <div class="collision-types">
+            <label class="radio-label">
+                <input type="radio" name="e-type" value="1.0" checked> 物块材质较硬
+            </label>
+            <label class="radio-label">
+                <input type="radio" name="e-type" value="0.5"> 物块材质较软
+            </label>
+            <label class="radio-label">
+                <input type="radio" name="e-type" value="0"> 物块材质较粘
+            </label>
+        </div>
+
+        <div class="button-group">
+            <button id="start-btn" class="btn-start">开始演示</button>
+            <button id="reset-btn" class="btn-reset">重置实验</button>
+        </div>
+    </div>
+
+
+
+<script>
+    // 基础参数
+    const track = document.getElementById('track');
+    const b1 = document.getElementById('block1');
+    const b2 = document.getElementById('block2');
+    const v1Disp = document.getElementById('v1-display');
+    const v2Disp = document.getElementById('v2-display');
+    
+    const m1Input = document.getElementById('m1-input');
+    const v1Input = document.getElementById('v1-input');
+    const m2Input = document.getElementById('m2-input');
+    const v2Input = document.getElementById('v2-input');
+    
+    const startBtn = document.getElementById('start-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let state = {
+        running: false,
+        collided: false,
+        x1: 200,
+        x2: 700,
+        v1: 0,
+        v2: 0,
+        m1: 5,
+        m2: 5,
+        e: 1,
+        width: 60,
+        timeScale: 0.2, // 慢动作
+        lastTime: 0
+    };
+
+    function init() {
+        state.x1 = 200;
+        state.x2 = 700;
+        state.v1 = parseFloat(v1Input.value);
+        state.v2 = parseFloat(v2Input.value);
+        state.m1 = parseFloat(m1Input.value);
+        state.m2 = parseFloat(m2Input.value);
+        state.e = parseFloat(document.querySelector('input[name="e-type"]:checked').value);
+        state.collided = false;
+        state.running = false;
+        
+        updateView();
+        startBtn.disabled = false;
+    }
+
+    function updateView() {
+        b1.style.left = state.x1 + 'px';
+        b2.style.left = state.x2 + 'px';
+        v1Disp.textContent = state.v1.toFixed(2) + ' m/s';
+        v2Disp.textContent = state.v2.toFixed(2) + ' m/s';
+    }
+
+    function calculateCollision() {
+        const m1 = state.m1;
+        const m2 = state.m2;
+        const v1 = state.v1;
+        const v2 = state.v2;
+        const e = state.e;
+
+        // 动量守恒 + 恢复系数公式联立求解
+        // v1' = (m1*v1 + m2*v2 - m2*e*(v1 - v2)) / (m1 + m2)
+        // v2' = (m1*v1 + m2*v2 + m1*e*(v1 - v2)) / (m1 + m2)
+        
+        const nextV1 = (m1 * v1 + m2 * v2 - m2 * e * (v1 - v2)) / (m1 + m2);
+        const nextV2 = (m1 * v1 + m2 * v2 + m1 * e * (v1 - v2)) / (m1 + m2);
+
+        state.v1 = nextV1;
+        state.v2 = nextV2;
+        state.collided = true;
+    }
+
+    function animate(timestamp) {
+        if (!state.running) return;
+
+        if (!state.lastTime) state.lastTime = timestamp;
+        const dt = (timestamp - state.lastTime) / 16.67; // 约等于每帧时间
+        state.lastTime = timestamp;
+
+        // 更新位置 (应用慢动作缩放)
+        state.x1 += state.v1 * state.timeScale * dt * 20; // 20为像素比例系数
+        state.x2 += state.v2 * state.timeScale * dt * 20;
+
+        // 碰撞检测
+        if (!state.collided && (state.x1 + state.width >= state.x2)) {
+            // 修正重叠
+            const overlap = (state.x1 + state.width) - state.x2;
+            state.x1 -= overlap / 2;
+            state.x2 += overlap / 2;
+            calculateCollision();
+        }
+
+        updateView();
+
+        // 边界处理：如果移出视野则停止，不反弹也不重复
+        const trackWidth = track.offsetWidth;
+        if (state.x1 < -200 || state.x1 > trackWidth + 200 || state.x2 < -200 || state.x2 > trackWidth + 200) {
+            state.running = false;
+        }
+
+        if (state.running) {
+            requestAnimationFrame(animate);
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        if (!state.running) {
+            // 如果是重置后的第一次开始，读取输入
+            state.v1 = parseFloat(v1Input.value);
+            state.v2 = parseFloat(v2Input.value);
+            state.m1 = parseFloat(m1Input.value);
+            state.m2 = parseFloat(m2Input.value);
+            state.e = parseFloat(document.querySelector('input[name="e-type"]:checked').value);
+            
+            state.running = true;
+            state.lastTime = 0;
+            startBtn.disabled = true;
+            requestAnimationFrame(animate);
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        state.running = false;
+        init();
+    });
+
+    // 初始化显示
+    init();
+
+</script>
+</body>
+</html>
